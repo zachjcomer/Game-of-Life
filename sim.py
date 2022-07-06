@@ -11,7 +11,7 @@ TODO:   infinite plane conditions
         rewrite cells to be objects
         * cells only need to be updated if they or their neighbors change state *
 '''
-
+import importPattern
 import random
 import argparse
 import math
