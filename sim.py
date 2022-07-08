@@ -12,6 +12,7 @@ TODO:   infinite plane conditions
         * cells only need to be updated if they or their neighbors change state *
 '''
 import importPattern
+import cell
 import random
 import argparse
 import math
@@ -32,6 +33,13 @@ class game:
         self.__sizeY = n[1]
         self.__cell = cellSize
         self.board = [[0 for i in range(self.__sizeX)] for i in range(self.__sizeY)]
+        self.update = set()
+
+        # create a cell for every coordinate
+        for i, row in enumerate(self.board):
+            for j, _ in enumerate(row):
+                self.board[i][j] = cell.cell((i,j))
+
         return None
     
     def rand(self):
@@ -39,27 +47,9 @@ class game:
         Generate a random board.
         '''
         random.seed()
-        self.board = [[random.getrandbits(1) for i in range(self.__sizeX)] for i in range(self.__sizeY)]
-        return None
-
-    def importFromTxt(self, name, head = (0, 0)):
-        '''
-        Import from a txt file.
-        '''
-        if exists(f'configs\{name}.txt'):
-            file = open(f'configs\{name}.txt').read()
-        else:
-            return False
-
-        r = 1 + file.count('\n')
-        pattern = file.replace('\n', '')
-        c = len(pattern) // r
-        board = [[0 for i in range(c)] for i in range(r)]
-        for i in range(r):
-            for j in range(c):
-                board[i][j] = int(pattern[j + c * i])
-        self.importToBoard(board, head)
-
+        for i, row in enumerate(self.board):
+            for j, _ in enumerate(row):
+                self.board[i][j].setState(random.getrandbits(1))
         return None
 
     def export(self, name = 'export'):
@@ -78,6 +68,12 @@ class game:
         s = ''
         for i in range(self.__sizeY):
             s += f'{self.board[i][:]}\n'
+        
+        s = ''
+        for i, row in enumerate(self.board):
+            for j, _ in enumerate(row):
+                s += str(self.board[i][j].getState())
+            s += '\n'
         return s
 
     def importToBoard(self, figure, head):
@@ -92,115 +88,121 @@ class game:
     def forceDraw(self, surface):
         for i, row in enumerate(self.board):
             for j, cell in enumerate(self.board[i]):
-                if self.board[i][j] == 1:
-                    pygame.draw.rect(surface, (255, 255, 255), (j * self.__cell, i * self.__cell, self.__cell - 1, self.__cell - 1))
+                if self.board[i][j].isAlive():
+                    pygame.draw.rect(surface, (255, 255, 255), (self.board[i][j].getCoords()[1] * self.__cell, self.board[i][j].getCoords()[0] * self.__cell, self.__cell - 1, self.__cell - 1))
         return None  
 
-    def finite(self, surface):
+    def initBox(self):
         '''
-        Finite boundary conditions.
+        Finite bounded topography.
+        Create the cells and set their neighbors.
+
+        Optimization: when adding neighbor A to cell B, could also add neighbor B to cell A
         '''
-        next = [[0 for i in range(self.__sizeX)] for i in range(self.__sizeY)]
+
+        # for each coordinate, add the appropriate neighbors to each cell
         for i, row in enumerate(self.board):
-            for j, cell in enumerate(row):
-                living = 0
+            for j, _ in enumerate(row):
                 if (0 < i < (self.__sizeY - 1)) and (0 < j < (self.__sizeX - 1)):
-                    living += self.board[(i-1) % self.__sizeY][(j-1) % self.__sizeX] # top left
-                    living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                    living += self.board[(i-1) % self.__sizeY][(j+1) % self.__sizeX] # top right
-                    living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
-                    living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
-                    living += self.board[(i+1) % self.__sizeY][(j-1) % self.__sizeX] #  bot left
-                    living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
-                    living += self.board[(i+1) % self.__sizeY][(j+1) % self.__sizeX] # bot right
+                    self.board[i][j].addNeighbor(self.board[i-1][j-1]) # top left
+                    self.board[i][j].addNeighbor(self.board[i-1][j])   # top
+                    self.board[i][j].addNeighbor(self.board[i-1][j+1]) # top right
+                    self.board[i][j].addNeighbor(self.board[i][j-1])   # left
+                    self.board[i][j].addNeighbor(self.board[i][j+1])   # right
+                    self.board[i][j].addNeighbor(self.board[i+1][j-1]) #  bot left
+                    self.board[i][j].addNeighbor(self.board[i+1][j])   # bot
+                    self.board[i][j].addNeighbor(self.board[i+1][j+1]) # bot right
                 elif (i == 0) or (i == self.__sizeY - 1):
                     if i == 0:
                         if j == 0:
-                            living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
-                            living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
-                            living += self.board[(i+1) % self.__sizeY][(j+1) % self.__sizeX] # bot right
+                            self.board[i][j].addNeighbor(self.board[i][j+1])
+                            self.board[i][j].addNeighbor(self.board[i+1][j])
+                            self.board[i][j].addNeighbor(self.board[i+1][j+1])
                         elif j == self.__sizeX - 1:
-                            living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
-                            living += self.board[(i+1) % self.__sizeY][(j-1) % self.__sizeX] #  bot left
-                            living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
+                            self.board[i][j].addNeighbor(self.board[i][j-1])
+                            self.board[i][j].addNeighbor(self.board[i+1][j-1])
+                            self.board[i][j].addNeighbor(self.board[i+1][j])
                         else:
-                            living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
-                            living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
-                            living += self.board[(i+1) % self.__sizeY][(j-1) % self.__sizeX] #  bot left
-                            living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
-                            living += self.board[(i+1) % self.__sizeY][(j+1) % self.__sizeX] # bot right
-
+                            self.board[i][j].addNeighbor(self.board[i][j-1])
+                            self.board[i][j].addNeighbor(self.board[i][j+1])
+                            self.board[i][j].addNeighbor(self.board[i+1][j-1])
+                            self.board[i][j].addNeighbor(self.board[i+1][j])
+                            self.board[i][j].addNeighbor(self.board[i+1][j+1])
                     elif i == self.__sizeY - 1:
                         if j == 0:
-                            living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                            living += self.board[(i-1) % self.__sizeY][(j+1) % self.__sizeX] # top right
-                            living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
+                            self.board[i][j].addNeighbor(self.board[i-1][j])
+                            self.board[i][j].addNeighbor(self.board[i-1][j+1])
+                            self.board[i][j].addNeighbor(self.board[i][j+1])
                         elif j == self.__sizeX - 1:
-                            living += self.board[(i-1) % self.__sizeY][(j-1) % self.__sizeX] # top left
-                            living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                            living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
+                            self.board[i][j].addNeighbor(self.board[i-1][j-1])
+                            self.board[i][j].addNeighbor(self.board[i-1][j])
+                            self.board[i][j].addNeighbor(self.board[i][j-1])
                         else:
-                            living += self.board[(i-1) % self.__sizeY][(j-1) % self.__sizeX] # top left
-                            living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                            living += self.board[(i-1) % self.__sizeY][(j+1) % self.__sizeX] # top right
-                            living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
-                            living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
-
+                            self.board[i][j].addNeighbor(self.board[i-1][j-1])
+                            self.board[i][j].addNeighbor(self.board[i-1][j])
+                            self.board[i][j].addNeighbor(self.board[i-1][j+1])
+                            self.board[i][j].addNeighbor(self.board[i][j-1])
+                            self.board[i][j].addNeighbor(self.board[i][j+1])
                 elif (j == 0) or (j == self.__sizeX - 1):
                     if j == 0:
-                        living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                        living += self.board[(i-1) % self.__sizeY][(j+1) % self.__sizeX] # top right
-                        living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
-                        living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
-                        living += self.board[(i+1) % self.__sizeY][(j+1) % self.__sizeX] # bot right
+                        self.board[i][j].addNeighbor(self.board[i-1][j])
+                        self.board[i][j].addNeighbor(self.board[i-1][j+1])
+                        self.board[i][j].addNeighbor(self.board[i][j+1])
+                        self.board[i][j].addNeighbor(self.board[i+1][j])
+                        self.board[i][j].addNeighbor(self.board[i+1][j+1])
                     elif j == self.__sizeX - 1:
-                        living += self.board[(i-1) % self.__sizeY][(j-1) % self.__sizeX] # top left
-                        living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                        living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
-                        living += self.board[(i+1) % self.__sizeY][(j-1) % self.__sizeX] #  bot left
-                        living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
-            
-                # RULES TO GAME OF LIFE
-                if (living == 2 or living == 3) and self.board[i][j] == 1:
-                    next[i][j] = 1
-                    pygame.draw.rect(surface, (255, 255, 255), (j * self.__cell, i * self.__cell, self.__cell - 1, self.__cell - 1))
-                elif living == 3 and self.board[i][j] == 0:
-                    next[i][j] = 1
-                    pygame.draw.rect(surface, (255, 255, 255), (j * self.__cell, i * self.__cell, self.__cell - 1, self.__cell - 1))
-                else:
-                    next[i][j] = 0
-
-        self.board = next
+                        self.board[i][j].addNeighbor(self.board[i-1][j-1])
+                        self.board[i][j].addNeighbor(self.board[i-1][j])
+                        self.board[i][j].addNeighbor(self.board[i][j-1])
+                        self.board[i][j].addNeighbor(self.board[i+1][j-1])
+                        self.board[i][j].addNeighbor(self.board[i+1][j])
+                self.update.add(self.board[i][j])
         return None
 
-    def toroid(self, surface):
+    def initToroid(self):
         '''
-        Toroidal boundary conditions.
+        Toroidal topography.
+        Create the cells and set their neighbors.
+
+        Optimization: when adding neighbor A to cell B, could also add neighbor B to cell A
         '''
-        next = [[0 for i in range(self.__sizeX)] for i in range(self.__sizeY)]
+        # for each coordinate, add the appropriate neighbors to each cell
         for i, row in enumerate(self.board):
-            for j, col in enumerate(self.board[i]):
-                living = 0
-                living += self.board[(i-1) % self.__sizeY][(j-1) % self.__sizeX] # top left
-                living += self.board[(i-1) % self.__sizeY][(j) % self.__sizeX] # top
-                living += self.board[(i-1) % self.__sizeY][(j+1) % self.__sizeX] # top right
-                living += self.board[(i) % self.__sizeY][(j-1) % self.__sizeX] # left
-                living += self.board[(i) % self.__sizeY][(j+1) % self.__sizeX] # right
-                living += self.board[(i+1) % self.__sizeY][(j-1) % self.__sizeX] #  bot left
-                living += self.board[(i+1) % self.__sizeY][(j) % self.__sizeX] # bot
-                living += self.board[(i+1) % self.__sizeY][(j+1) % self.__sizeX] # bot right
+            for j, _ in enumerate(row):
+                self.board[i][j].addNeighbor(self.board[(i-1) % self.__sizeY][(j-1) % self.__sizeX]) # top left
+                self.board[i][j].addNeighbor(self.board[(i-1) % self.__sizeY][(j) % self.__sizeX])   # top
+                self.board[i][j].addNeighbor(self.board[(i-1) % self.__sizeY][(j+1) % self.__sizeX]) # top right
+                self.board[i][j].addNeighbor(self.board[(i) % self.__sizeY][(j-1) % self.__sizeX])   # left
+                self.board[i][j].addNeighbor(self.board[(i) % self.__sizeY][(j+1) % self.__sizeX])   # right
+                self.board[i][j].addNeighbor(self.board[(i+1) % self.__sizeY][(j-1) % self.__sizeX]) #  bot left
+                self.board[i][j].addNeighbor(self.board[(i+1) % self.__sizeY][(j) % self.__sizeX])   # bot
+                self.board[i][j].addNeighbor(self.board[(i+1) % self.__sizeY][(j+1) % self.__sizeX]) # bot right
+                self.update.add(self.board[i][j])
+        return None
 
-                # RULES TO GAME OF LIFE
-                if (living == 2 or living == 3) and self.board[i][j] == 1:
-                    next[i][j] = 1
-                    pygame.draw.rect(surface, (255, 255, 255), (j * self.__cell, i * self.__cell, self.__cell - 1, self.__cell - 1))
-                elif living == 3 and self.board[i][j] == 0:
-                    next[i][j] = 1
-                    pygame.draw.rect(surface, (255, 255, 255), (j * self.__cell, i * self.__cell, self.__cell - 1, self.__cell - 1))
-                else:
-                    next[i][j] = 0
+    def gen(self, Rulestring, surface):
+        birth = Rulestring.split('/')[0]
+        survival = Rulestring.split('/')[1]
+        print(birth, survival)
 
-        self.board = next
+        nextUpdate = set()
+        
+        for cell in self.update:
+            print(cell)
+            if (not cell.isAlive()) and (cell.getNeighborSum() in birth):
+                cell.setState(1)
+                nextUpdate.add(cell)
+                nextUpdate.add(cell.neighbors)
+                pygame.draw.rect(surface, (255, 255, 255), (cell.getCoords()[1] * self.__cell, cell.getCoords()[0] * self.__cell, self.__cell - 1, self.__cell - 1))
+            elif (cell.isAlive()) and (cell.getNeighborSum() not in survival):
+                cell.setState(0)
+                nextUpdate.add(cell)
+                nextUpdate.add(cell.neighbors)
+            else:
+                pygame.draw.rect(surface, (255, 255, 255), (cell.getCoords()[1] * self.__cell, cell.getCoords()[0] * self.__cell, self.__cell - 1, self.__cell - 1))
+
+        self.update = nextUpdate
+
         return None
 
 def main():
@@ -213,10 +215,13 @@ def main():
     parser.add_argument('--export', action = 'store_true', required = False, help = 'Write the initial setup to an export file called export.txt')
     args = parser.parse_args()
 
+    # configure cellular automaton rules
+    rulestring = '3/23'
+
     # configure the grid and cell sizes
     SCREEN = 1000 # max screen size
-    Nx = 100 # number of horizontal cells
-    Ny = 100 # number of vertical cells
+    Nx = 10 # number of horizontal cells
+    Ny = 10 # number of vertical cells
     if args.N and len(args.N) > 1 and args.N[0] > 0 and args.N[1] > 0:
         Nx = args.N[0]
         Ny = args.N[1]
@@ -233,11 +238,17 @@ def main():
 
     # take optional arguements from parser to config initial gen
     g = game((Nx, Ny), cellSize)
-    g.importFromTxt('acorn', (30, 30))
+    g.initBox()
+    g.rand()
+    print(g)
+
+    print(g.board[1][1].getNeighbors())
 
     # if requested by args
+    '''
     if args.export:
         g.export()
+    '''
 
     # start pygame and draw gen 0
     pygame.init()
@@ -262,7 +273,7 @@ def main():
                 pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
                 clock.tick(updateInterval)
                 surface.fill((0, 0, 0))
-                g.finite(surface)
+                g.gen(rulestring, surface)
                 pygame.display.update()
                 gen += 1
     else:
@@ -280,9 +291,11 @@ def main():
                 pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
                 clock.tick(updateInterval)
                 surface.fill((0, 0, 0))
-                g.toroid(surface)
+                g.gen(rulestring, surface)
                 pygame.display.update()
                 gen += 1
+
+    return None
 
 if __name__ == '__main__':
     main()
