@@ -1,15 +1,22 @@
 '''
-TODO:   infinite plane conditions
-        arbitrary wall boundaries
+FIXME:  rulestring interpreter
 
-        more boundary verifications
+        txt importer
+
+TODO:   .rle importer
+
+        infinite plane conditions
+        arbitrary wall boundaries
 
         import rotations, reflections
 
         set canvas size from import bounds
 
-        rewrite cells to be objects
         * cells only need to be updated if they or their neighbors change state *
+
+        arbitrary lattice configurations
+        von-neumann neighborhoods, etc
+
 '''
 import importPattern
 import cell
@@ -64,11 +71,6 @@ class game:
         '''
         Print the current board as an n-by-n grid.
         '''
-
-        s = ''
-        for i in range(self.__sizeY):
-            s += f'{self.board[i][:]}\n'
-        
         s = ''
         for i, row in enumerate(self.board):
             for j, _ in enumerate(row):
@@ -85,7 +87,7 @@ class game:
                 self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX] = figure[i][j]
         return None
 
-    def forceDraw(self, surface):
+    def draw(self, surface):
         for i, row in enumerate(self.board):
             for j, cell in enumerate(self.board[i]):
                 if self.board[i][j].isAlive():
@@ -180,26 +182,31 @@ class game:
                 self.update.add(self.board[i][j])
         return None
 
-    def gen(self, Rulestring, surface):
-        birth = Rulestring.split('/')[0]
-        survival = Rulestring.split('/')[1]
+    def unpackRules(self, Rulestring):
+        rules = Rulestring.split('/')
+        birth = rules.find('B')
+        survival = rules.find('S')
         print(birth, survival)
 
-        nextUpdate = set()
+    def gen(self, birth, survival, surface):
         
+        nextUpdate = set()
         for cell in self.update:
-            print(cell)
-            if (not cell.isAlive()) and (cell.getNeighborSum() in birth):
-                cell.setState(1)
+            if (not cell.isAlive()) and (cell.getNeighborSum() == birth):
+                cell.toggleNext()
                 nextUpdate.add(cell)
-                nextUpdate.add(cell.neighbors)
-                pygame.draw.rect(surface, (255, 255, 255), (cell.getCoords()[1] * self.__cell, cell.getCoords()[0] * self.__cell, self.__cell - 1, self.__cell - 1))
+                nextUpdate.update(cell.neighbors)
             elif (cell.isAlive()) and (cell.getNeighborSum() not in survival):
-                cell.setState(0)
+                cell.toggleNext()
                 nextUpdate.add(cell)
-                nextUpdate.add(cell.neighbors)
+                nextUpdate.update(cell.neighbors)
             else:
-                pygame.draw.rect(surface, (255, 255, 255), (cell.getCoords()[1] * self.__cell, cell.getCoords()[0] * self.__cell, self.__cell - 1, self.__cell - 1))
+                cell.setNext(cell.getState())
+
+        self.draw(surface)
+
+        for cell in self.update:
+            cell.setState(cell.getNext())
 
         self.update = nextUpdate
 
@@ -216,12 +223,12 @@ def main():
     args = parser.parse_args()
 
     # configure cellular automaton rules
-    rulestring = '3/23'
+    rulestring = 'B3/S23'
 
     # configure the grid and cell sizes
     SCREEN = 1000 # max screen size
-    Nx = 10 # number of horizontal cells
-    Ny = 10 # number of vertical cells
+    Nx = 100 # number of horizontal cells
+    Ny = 100 # number of vertical cells
     if args.N and len(args.N) > 1 and args.N[0] > 0 and args.N[1] > 0:
         Nx = args.N[0]
         Ny = args.N[1]
@@ -230,7 +237,7 @@ def main():
     cellSize = SCREEN / max(Nx, Ny)
 
     # configure pygame
-    updateInterval = 60 # pygame clock tick rate
+    updateInterval = 30 # pygame clock tick rate
     if args.T and args.T > 0:
         updateInterval = args.T
     
@@ -240,9 +247,6 @@ def main():
     g = game((Nx, Ny), cellSize)
     g.initBox()
     g.rand()
-    print(g)
-
-    print(g.board[1][1].getNeighbors())
 
     # if requested by args
     '''
@@ -255,7 +259,7 @@ def main():
     surface = pygame.display.set_mode((cellSize * Nx, cellSize * Ny))
     pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
     clock = pygame.time.Clock()
-    g.forceDraw(surface)
+    g.draw(surface)
     pygame.display.update()
 
     if args.closed:
@@ -273,7 +277,7 @@ def main():
                 pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
                 clock.tick(updateInterval)
                 surface.fill((0, 0, 0))
-                g.gen(rulestring, surface)
+                g.gen((3), (2, 3), surface)
                 pygame.display.update()
                 gen += 1
     else:
@@ -291,7 +295,7 @@ def main():
                 pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
                 clock.tick(updateInterval)
                 surface.fill((0, 0, 0))
-                g.gen(rulestring, surface)
+                g.gen((3), (2, 3), surface)
                 pygame.display.update()
                 gen += 1
 

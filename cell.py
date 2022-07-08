@@ -10,6 +10,7 @@ class cell:
         '''
         self.coords = coords
         self.state = 0
+        self.next = None
         self.neighbors = []
         return None
 
@@ -29,9 +30,9 @@ class cell:
         '''
         Return a list of the current cell's neighbor cell objects.
         '''
-        s = []
+        s = '\n'
         for neighbor in self.neighbors:
-            s.append(neighbor.getCoords())
+            s += (f'{neighbor.getCoords()}: {neighbor.getState()}\n')
         return s
 
     def addNeighbor(self, neighbor):
@@ -65,13 +66,27 @@ class cell:
         self.state = x
         return None
 
-    def toggleState(self):
+    def setNext(self, x):
+        '''
+        Sets the value of the cell in the next generation.
+        '''
+
+        self.next = x
+        return None
+
+    def getNext(self):
+        '''
+        Returns the value of the cell in the next generation.
+        '''
+        return self.next
+
+    def toggleNext(self):
         '''
         Toggle the state of the cell.
         '''
         if self.state == 0:
-            self.state = 1
+            self.next = 1
         else:
-            self.state = 0
+            self.next = 0
 
         return None
