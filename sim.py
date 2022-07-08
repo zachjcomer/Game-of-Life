@@ -1,5 +1,7 @@
 '''
-FIXME:  rulestring interpreter
+FIXME:  gen() ruleset interpreter
+
+        rulestring interpreter
 
         txt importer
 
@@ -192,7 +194,7 @@ class game:
         
         nextUpdate = set()
         for cell in self.update:
-            if (not cell.isAlive()) and (cell.getNeighborSum() == birth):
+            if (not cell.isAlive()) and (cell.getNeighborSum() in birth):
                 cell.toggleNext()
                 nextUpdate.add(cell)
                 nextUpdate.update(cell.neighbors)
@@ -224,6 +226,8 @@ def main():
 
     # configure cellular automaton rules
     rulestring = 'B3/S23'
+    birth = (3, 4, 9)
+    survival = (9, 10)
 
     # configure the grid and cell sizes
     SCREEN = 1000 # max screen size
@@ -277,7 +281,7 @@ def main():
                 pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
                 clock.tick(updateInterval)
                 surface.fill((0, 0, 0))
-                g.gen((3), (2, 3), surface)
+                g.gen(birth, survival, surface)
                 pygame.display.update()
                 gen += 1
     else:
@@ -295,7 +299,7 @@ def main():
                 pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
                 clock.tick(updateInterval)
                 surface.fill((0, 0, 0))
-                g.gen((3), (2, 3), surface)
+                g.gen(birth, survival, surface)
                 pygame.display.update()
                 gen += 1
 
