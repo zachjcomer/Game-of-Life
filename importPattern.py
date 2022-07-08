@@ -13,8 +13,8 @@ def import_txt(name):
     001$
     111$
     '''
-    if exists(f'configs\{name}.txt'):
-        file = open(f'configs\{name}.txt').read()
+    if exists(f'patterns\{name}.txt'):
+        file = open(f'patterns\{name}.txt').read()
     else:
         return False
 
@@ -27,7 +27,7 @@ def import_txt(name):
             board[i][j] = int(pattern[j + c * i])
         
 
-    return None
+    return board
 
 def import_rle():
     '''

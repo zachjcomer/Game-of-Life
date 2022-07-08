@@ -80,13 +80,13 @@ class game:
             s += '\n'
         return s
 
-    def importToBoard(self, figure, head):
+    def addToBoard(self, figure, head = (0,0)):
         '''
         Places imported figures onto the board.
         '''
         for i in range(len(figure)):
             for j in range(len(figure[i])):
-                self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX] = figure[i][j]
+                self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX].setState(figure[i][j])
         return None
 
     def draw(self, surface):
@@ -226,11 +226,11 @@ def main():
 
     # configure cellular automaton rules
     rulestring = 'B3/S23'
-    birth = (3, 4, 9)
-    survival = (9, 10)
+    birth = (3, 9)
+    survival = (2, 3)
 
     # configure the grid and cell sizes
-    SCREEN = 1000 # max screen size
+    SCREEN = 800 # max screen size
     Nx = 100 # number of horizontal cells
     Ny = 100 # number of vertical cells
     if args.N and len(args.N) > 1 and args.N[0] > 0 and args.N[1] > 0:
@@ -250,7 +250,7 @@ def main():
     # take optional arguements from parser to config initial gen
     g = game((Nx, Ny), cellSize)
     g.initBox()
-    g.rand()
+    g.addToBoard(importPattern.import_txt('glider'), (97, 97))
 
     # if requested by args
     '''
