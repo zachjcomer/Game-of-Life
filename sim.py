@@ -217,12 +217,12 @@ class game:
 def main():
     active = False # allows the simulation to proceed]
 
-    parser = argparse.ArgumentParser('Configure the Game of Life')
-    parser.add_argument('--size', dest = 'N', nargs = '+', type = int, required = False, help = 'The size of the grid. Enter one integer for a square or two for a rectangle. Default = 100 x 100 cells')
-    parser.add_argument('--interval', dest = 'T', type = int, required = False, help = 'Set the clock tick rate for pygame. Default = 30 ticks/sec.')
-    parser.add_argument('--closed', action = 'store_true', required = False, help = 'Set the topology to closed, so boundary cells have less than 8 neighbors. Default topology is toroidal.')
-    parser.add_argument('--export', action = 'store_true', required = False, help = 'Write the initial setup to an export file called export.txt')
-    args = parser.parse_args()
+    argparser = argparse.ArgumentParser('Configure the Game of Life')
+    argparser.add_argument('--size', dest = 'N', nargs = '+', type = int, required = False, help = 'The size of the grid. Enter one integer for a square or two for a rectangle. Default = 100 x 100 cells')
+    argparser.add_argument('--interval', dest = 'T', type = int, required = False, help = 'Set the clock tick rate for pygame. Default = 30 ticks/sec.')
+    argparser.add_argument('--closed', action = 'store_true', required = False, help = 'Set the topology to closed, so boundary cells have less than 8 neighbors. Default topology is toroidal.')
+    argparser.add_argument('--export', action = 'store_true', required = False, help = 'Write the initial setup to an export file called export.txt')
+    args = argparser.parse_args()
 
     # configure cellular automaton rules
     rulestring = 'B3/S23'
@@ -230,9 +230,9 @@ def main():
     survival = (2, 3)
 
     # configure the grid and cell sizes
-    SCREEN = 1600 # max screen size
-    Nx = 400 # number of horizontal cells
-    Ny = 200 # number of vertical cells
+    SCREEN = 800 # max screen size
+    Nx = 200 # number of horizontal cells
+    Ny = 100 # number of vertical cells
     if args.N and len(args.N) > 1 and args.N[0] > 0 and args.N[1] > 0:
         Nx = args.N[0]
         Ny = args.N[1]
@@ -250,8 +250,7 @@ def main():
     # take optional arguements from parser to config initial gen
     g = game((Nx, Ny), cellSize)
     g.initBox()
-    g.addToBoard(parser.import_txt('glider'), (97, 97))
-    g.rand()
+    g.addToBoard(parser.import_txt('gosper'), (80, 80))
 
     # if requested by args
     '''
