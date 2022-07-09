@@ -2,6 +2,7 @@
 Methods to import from .txt and .rle formats.
 '''
 
+import re
 from os.path import exists
 
 def import_txt(name):
@@ -29,12 +30,17 @@ def import_txt(name):
 
     return board
 
-def import_rle():
+def import_rle(name):
     '''
     Import from a .rle file.
 
     Format: standard life .rle formatting.
     https://conwaylife.com/wiki/Run_Length_Encoded
     '''
+    if exists(f'patterns\{name}.rle'):
+        file = open(f'patterns\{name}.rle').read()
+    else:
+        return False
+
 
     return None

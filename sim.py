@@ -250,8 +250,7 @@ def main():
     # take optional arguements from parser to config initial gen
     g = game((Nx, Ny), cellSize)
     g.initBox()
-    g.addToBoard(importPattern.import_txt('obj1'), (50, 50))
-    g.addToBoard(importPattern.import_txt('butterfly'), (10, 10))
+    g.rand()
 
     # if requested by args
     '''
