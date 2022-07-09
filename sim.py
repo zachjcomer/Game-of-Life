@@ -3,7 +3,7 @@ FIXME:  gen() ruleset interpreter
 
         rulestring interpreter
 
-        txt importer
+        .txt importer
 
 TODO:   .rle importer
 
@@ -20,7 +20,7 @@ TODO:   .rle importer
         von-neumann neighborhoods, etc
 
 '''
-import importPattern
+import parser
 import cell
 import random
 import argparse
@@ -250,7 +250,7 @@ def main():
     # take optional arguements from parser to config initial gen
     g = game((Nx, Ny), cellSize)
     g.initBox()
-    g.addToBoard(importPattern.import_txt('glider'), (97, 97))
+    g.addToBoard(parser.import_txt('glider'), (97, 97))
 
     # if requested by args
     '''
