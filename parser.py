@@ -31,6 +31,6 @@ def import_rle(name):
     rows = read(name)
     rows = [row for row in rows if row[0] != '#']
 
-    print(file)
+    print(rows)
 
     return None

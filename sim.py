@@ -230,9 +230,9 @@ def main():
     survival = (2, 3)
 
     # configure the grid and cell sizes
-    SCREEN = 800 # max screen size
-    Nx = 100 # number of horizontal cells
-    Ny = 100 # number of vertical cells
+    SCREEN = 1600 # max screen size
+    Nx = 400 # number of horizontal cells
+    Ny = 200 # number of vertical cells
     if args.N and len(args.N) > 1 and args.N[0] > 0 and args.N[1] > 0:
         Nx = args.N[0]
         Ny = args.N[1]
@@ -251,6 +251,7 @@ def main():
     g = game((Nx, Ny), cellSize)
     g.initBox()
     g.addToBoard(parser.import_txt('glider'), (97, 97))
+    g.rand()
 
     # if requested by args
     '''
