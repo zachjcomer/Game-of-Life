@@ -6,7 +6,7 @@ from os.path import exists
 
 def import_txt(name):
     '''
-    Import from a .txt file.
+    Import from a .txt file. Returns an array of binary values of the same size as the .txt file grid.
 
     Format: string of 0, 1 with $ as a newline char. E.g., a glider is:
     010$
