@@ -3,9 +3,7 @@ FIXME:  gen() ruleset interpreter
 
         rulestring interpreter
 
-        .txt importer
-
-TODO:   .rle importer
+TODO:   dynamic size and ruleset interpretation from imports
 
         infinite plane conditions
         arbitrary wall boundaries
@@ -61,8 +59,8 @@ def main():
     # take optional arguements from parser to config initial gen
     g = board.game((Nx, Ny), cellSize)
     g.initToroid()
-    g.rand()
-    g.addToBoard(parser.import_rle('test'), (80, 80))
+
+    g.addToBoard(parser.parseRLE('newgun2'), (40, 40))
 
     # if requested by args
     '''

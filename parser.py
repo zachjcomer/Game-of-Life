@@ -13,7 +13,13 @@ def read(name):
     else: 
         return [line.strip() for line in file.readlines()]
 
-def import_txt(name):
+def parseRulestring(rulestring):
+    '''
+    Converts a rulestring of the form B/S to usable values.
+    '''
+    
+
+def parseTXT(name):
     '''
     Import from a .txt file.
 
@@ -27,13 +33,7 @@ def import_txt(name):
         return [[1 if cell == '1' else 0 for cell in line] for line in rows]
     return None
 
-def getRules(rulestring):
-    '''
-    Converts the interpreted rle string to a usable array.
-    '''
-    
-
-def import_rle(name):
+def parseRLE(name):
     '''
     Import from a .rle file.
 
@@ -49,16 +49,27 @@ def import_rle(name):
     config = rows[0]
     pattern = ''.join(rows[1:]).strip('\n')
 
-    config_comp = re.compile(r'x\s?=\s?(\d+).*?y\s?=\s?(\d+).*?B(\d+).*?S(\d+.)')
-    config_match = config_comp.search(config)
-    config_x = int(config_match.group(1))
-    config_y = int(config_match.group(2))
-    config_rules = (config_match.group(3), config_match.group(4))
+    config = re.compile(r'x\s?=\s?(\d+).*?y\s?=\s?(\d+).*?(B\d+.*?S\d+.)').search(config)
+    size = (int(config.group(1)), int(config.group(2)))
+    rulestring = config.group(3)
     
-    pattern_comp = re.compile(r'(\d*)([bo$!])')
-    pattern_match = pattern_comp.findall(pattern)
-    pattern_match = [(1, match[1]) if match[0] == '' else (int(match[0]), match[1]) for match in pattern_match]
+    pattern = re.compile(r'(\d*)([bo$!])').findall(pattern)
+    pattern = [(1, match[1]) if match[0] == '' else (int(match[0]), match[1]) for match in pattern]
 
-    print(pattern_match)
+    board = [[0 for i in range(size[0])] for j in range(size[1])]
+    row = 0
+    col = 0
 
-    return None
+    for pair in pattern:
+        for i in range(pair[0]):
+            if pair[1] == 'b':
+                board[row][col] = 0
+                col += 1
+            elif pair[1] == 'o':
+                board[row][col] = 1
+                col += 1
+            elif pair[1] == '$':
+                row += 1
+                col = 0
+
+    return board
