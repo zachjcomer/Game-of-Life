@@ -35,10 +35,10 @@ def main():
     argparser.add_argument('--export', action = 'store_true', required = False, help = 'Write the initial setup to an export file called export.txt')
     args = argparser.parse_args()
 
-    # configure cellular automaton rules
+    # set cellular automata rules
     rulestring = 'B3/S23'
-    birth = (3, 6, 7, 8)
-    survival = (3, 4, 6, 7, 8)
+    birth = (3, 9)
+    survival = (2, 3)
 
     # configure the grid and cell sizes
     SCREEN = 800 # max screen size
@@ -62,7 +62,7 @@ def main():
     g = board.game((Nx, Ny), cellSize)
     g.initToroid()
     g.rand()
-    g.addToBoard(parser.import_txt('gosper'), (80, 80))
+    g.addToBoard(parser.import_rle('test'), (80, 80))
 
     # if requested by args
     '''

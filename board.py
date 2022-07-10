@@ -58,9 +58,10 @@ class game:
         '''
         Places imported figures onto the board.
         '''
-        for i in range(len(figure)):
-            for j in range(len(figure[i])):
-                self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX].setState(figure[i][j])
+        if figure:
+            for i in range(len(figure)):
+                for j in range(len(figure[i])):
+                    self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX].setState(figure[i][j])
         return None
 
     def draw(self, surface):
