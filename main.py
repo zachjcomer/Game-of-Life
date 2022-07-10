@@ -20,99 +20,78 @@ TODO:   dynamic size and ruleset interpretation from imports
 '''
 import parser
 import board
-import argparse
 import pygame
+import args
 
 def main():
-    active = False # allows the simulation to proceed]
+    # CA parameters
+    rulestring = 'B3467/S45' # Life B3/S23 Day and Night B3678/S34678
+    cellsX = 200
+    cellsY = 200
+    boardWrapped = True
 
-    argparser = argparse.ArgumentParser('Configure the Game of Life')
-    argparser.add_argument('--size', dest = 'N', nargs = '+', type = int, required = False, help = 'The size of the grid. Enter one integer for a square or two for a rectangle. Default = 100 x 100 cells')
-    argparser.add_argument('--interval', dest = 'T', type = int, required = False, help = 'Set the clock tick rate for pygame. Default = 30 ticks/sec.')
-    argparser.add_argument('--closed', action = 'store_true', required = False, help = 'Set the topology to closed, so boundary cells have less than 8 neighbors. Default topology is toroidal.')
-    argparser.add_argument('--export', action = 'store_true', required = False, help = 'Write the initial setup to an export file called export.txt')
-    args = argparser.parse_args()
-
-    # set cellular automata rules
-    rulestring = 'B3/S23'
-    birth = (3, 9)
-    survival = (2, 3)
-
-    # configure the grid and cell sizes
-    SCREEN = 800 # max screen size
-    Nx = 200 # number of horizontal cells
-    Ny = 100 # number of vertical cells
-    if args.N and len(args.N) > 1 and args.N[0] > 0 and args.N[1] > 0:
-        Nx = args.N[0]
-        Ny = args.N[1]
-    elif args.N and args.N[0] > 0:
-        Nx, Ny = args.N[0], args.N[0]
-    cellSize = SCREEN / max(Nx, Ny)
-
-    # configure pygame
+    # pygame parameters
     updateInterval = 30 # pygame clock tick rate
-    if args.T and args.T > 0:
-        updateInterval = args.T
+    screenSize = 800 # max screen size
+
+    '''
+    Command line configuration:
+    --size
+    --interval
+    --wrap
+    --export
+    '''
+    newArgs = args.new()
+    if newArgs.N and len(newArgs.N) > 1 and newArgs.N[0] > 0 and newArgs.N[1] > 0:
+        cellsX = newArgs.N[0]
+        cellsY = newArgs.N[1]
+    elif newArgs.N and newArgs.N[0] > 0:
+        cellsX, cellsY = newArgs.N[0], newArgs.N[0]
+    cellSize = screenSize / max(cellsX, cellsY)   
+    if newArgs.T and newArgs.T > 0:
+        updateInterval = newArgs.T
+    if newArgs.wrap:
+        boardWrapped = True
     
-    gen = 0
+    g = board.game((cellsX, cellsY), cellSize, rulestring)
+    g.init(wrap = boardWrapped)
 
-    # take optional arguements from parser to config initial gen
-    g = board.game((Nx, Ny), cellSize)
-    g.initToroid()
-
-    g.addToBoard(parser.parseRLE('newgun2'), (40, 40))
+    # MANUALLY IMPORT CA PATTERNS HERE
+    g.addToBoard(parser.parseRLE('gosper'), (40, 40))
+    g.density(0.2)
 
     # if requested by args
-    '''
-    if args.export:
-        g.export()
-    '''
+    if newArgs.export:
+        g.export(fileType = 'txt')
+
+    gen = 0
+    active = False # allows the simulation to proceed
 
     # start pygame and draw gen 0
     pygame.init()
-    surface = pygame.display.set_mode((cellSize * Nx, cellSize * Ny))
+    surface = pygame.display.set_mode((cellSize * cellsX, cellSize * cellsY))
     pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
     clock = pygame.time.Clock()
     g.draw(surface)
     pygame.display.update()
 
-    if args.closed:
-        # loop through generations while allowed
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
-                elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_SPACE:
-                        active = not active
-                        pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
-            if active:
-                pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
-                clock.tick(updateInterval)
-                surface.fill((0, 0, 0))
-                g.gen(birth, survival, surface)
-                pygame.display.update()
-                gen += 1
-    else:
-        # loop through generations while allowed
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
-                elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_SPACE:
-                        active = not active
-                        pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
-            if active:
-                pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
-                clock.tick(updateInterval)
-                surface.fill((0, 0, 0))
-                g.gen(birth, survival, surface)
-                pygame.display.update()
-                gen += 1
-
+    # loop through generations while allowed
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    active = not active
+                    pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
+        if active:
+            pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
+            clock.tick(updateInterval)
+            surface.fill((0, 0, 0))
+            g.gen(surface)
+            pygame.display.update()
+            gen += 1
     return None
 
 if __name__ == '__main__':

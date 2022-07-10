@@ -13,11 +13,15 @@ def read(name):
     else: 
         return [line.strip() for line in file.readlines()]
 
-def parseRulestring(rulestring):
+def getRules(rulestring):
     '''
     Converts a rulestring of the form B/S to usable values.
     '''
-    
+    rules = re.compile(r'B(\d*)/S(\d*)').search(rulestring)
+    if rules:
+        return([int(c) for c in rules.group(1)], [int(c) for c in rules.group(2)])
+    else:
+        return None
 
 def parseTXT(name):
     '''
@@ -72,4 +76,12 @@ def parseRLE(name):
                 row += 1
                 col = 0
 
-    return board
+    return (board, name, rulestring)
+
+def exportTXT(pattern, name = 'export'):
+    '''
+    Writes the input pattern (a 2D array of binary values) to a .txt file.
+    '''
+    file = open(f'patterns\{name}.txt', 'w')
+    file.write(str(pattern).replace(', ', '').replace('[', '').replace(']', '\n').replace('\n\n\n', ''))
+    file.close()
