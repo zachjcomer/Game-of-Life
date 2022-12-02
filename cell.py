@@ -10,61 +10,18 @@ class cell:
         '''
         self.coords = coords
         self.state = 0
-        self.next = None
+        self.next = 0
         self.neighbors = []
         return None
 
-    def __str__(self):
-        '''
-        Return the cell location and the cell state.
-        '''
-        return f'({self.coords[0]},{self.coords[1]}): {self.state}'
-
-    def getCoords(self):
-        '''
-        Return the cell location.
-        '''
-        return self.coords
-
-    def getNeighbors(self):
-        '''
-        Return a list of the current cell's neighbor cell objects.
-        '''
-        s = '\n'
-        for neighbor in self.neighbors:
-            s += (f'{neighbor.getCoords()}: {neighbor.getState()}\n')
-        return s
-
-    def addNeighbor(self, neighbor):
-        '''
-        Add a cell object to the current cell's neighborhood.
-        '''
-        self.neighbors.append(neighbor)
-
     def getNeighborSum(self):
+        '''
+        Sum the states of neighbor cells to compute next for self.
+        '''
         neighborSum = 0
         for cell in self.neighbors:
             neighborSum += cell.getState()
         return neighborSum
-
-    def getState(self):
-        '''
-        Return the current state of the cell.
-        '''
-        return self.state
-    
-    def isAlive(self):
-        '''
-        Returns true if the cell is alive.
-        '''
-        return self.state == 1
-
-    def setState(self, x):
-        '''
-        Sets the value of the cell.
-        '''
-        self.state = x
-        return None
 
     def setNext(self, x):
         '''
@@ -72,6 +29,20 @@ class cell:
         '''
 
         self.next = x
+        return self
+
+    def setAlive(self):
+        '''
+        Sets the next value to alive.
+        '''
+        self.next = 1
+        return None
+    
+    def setDead(self):
+        '''
+        Sets the next value to dead.
+        '''
+        self.next = 0
         return None
 
     def getNext(self):
@@ -80,13 +51,45 @@ class cell:
         '''
         return self.next
 
-    def toggleNext(self):
+    def setState(self, x):
         '''
-        Toggle the state of the cell.
+        Sets the value of the cell.
         '''
-        if self.state == 0:
-            self.next = 1
-        else:
-            self.next = 0
+        self.state = x
+        return self
 
-        return None
+    def getState(self):
+        '''
+        Return the current state of the cell.
+        '''
+        return self.state
+
+    def isAlive(self):
+        '''
+        Returns true if the cell is alive.
+        '''
+        return self.state == 1
+
+    def addNeighbor(self, neighbor):
+            '''
+            Add a cell object to the current cell's neighborhood.
+            '''
+            self.neighbors.append(neighbor)
+
+    def getNeighbors(self):
+        '''
+        Return a list of the current cell's neighbor cell objects.
+        '''
+        return self.neighbors
+
+    def getCoords(self):
+        '''
+        Return the cell location.
+        '''
+        return self.coords
+
+    def __str__(self):
+        '''
+        Return the cell location and the cell state.
+        '''
+        return f'({self.coords[0]},{self.coords[1]}): {self.state}'
