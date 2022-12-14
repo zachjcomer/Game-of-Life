@@ -18,45 +18,45 @@ TODO:   dynamic size and ruleset interpretation from imports
         von-neumann neighborhoods, etc
 
 '''
-
+import importer
 import board
-
 import pygame
-import args
-import numpy as np
 
 def main():
     # CA parameters
-    rulestring = 'B3/S23' # Life B3/S23 Day and Night B3678/S34678
-    cellsX = 200
-    cellsY = 200
-    boardWrapped = True
+    rulestring = 'b3/S23' # Life B3/S23 Day and Night B3678/S34678
+    cells_x = 200
+    cells_y = 200
+    board_wrapped = True
 
     # pygame parameters
-    updateInterval = 144 # pygame clock tick rate
-    screenSize = 1200 # square pixels
+    update_interval = 60 # pygame clock tick rate
+    screen_size = 800 # square pixels
 
-    cellSize = screenSize / max(cellsX, cellsY)
+    cell_size = screen_size / max(cells_x, cells_y)
 
-    g = board.game((cellsX, cellsY), cellSize, rulestring)
-    g.init(wrap = boardWrapped)
+    g = board.game((cells_x, cells_y), cell_size, rulestring)
+    g.init(wrap = board_wrapped)
 
     # MANUALLY IMPORT CA PATTERNS HERE
-    # g.density(0)
-    g.rand()
-    # g.addToBoard(parser.parseRLE('gosper'), (40, 40))
-    # g.addToBoard(parser.parseRLE('newgun2'), (150, 150))
+    g.density(0)
+    # g.rand()
+    # g.add_to_board(importer.get_rle_from_file('gosper'), (40, 40))
+    
+    g.add_to_board(importer.get_rle_from_web('germ'), (100, 100))
+    # g.add_to_board(importer.get_rle_from_file('1234_synth'), (50, 50))
+    # g.add_to_board(importer.get_rle_from_file('newgun2'), (150, 150))
 
     # if requested by args
     """ if newArgs.export:
         g.export(fileType = 'txt') """
-
+    
     gen = 0
     active = False # allows the simulation to proceed
 
     # start pygame and draw gen 0
     pygame.init()
-    surface = pygame.display.set_mode((cellSize * cellsX, cellSize * cellsY))
+    surface = pygame.display.set_mode((cell_size * cells_x, cell_size * cells_y))
     pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
     clock = pygame.time.Clock()
     g.draw(surface) # initial board configuration
@@ -74,7 +74,7 @@ def main():
                     pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
         if active:
             pygame.display.set_caption(f'Game of Life: Gen = {gen}, Running = {active}')
-            clock.tick(updateInterval)
+            clock.tick(update_interval)
             # surface.fill((0, 0, 0))
             g.gen(surface)
             pygame.display.update()
