@@ -3,7 +3,6 @@ import random
 
 import pygame
 import importer
-import numpy as np
 
 '''
 Micro-optimizations:
@@ -16,6 +15,7 @@ Micro-optimizations:
 
 class game:
     '''A class that contains methods to display the board and update its values.'''
+    game_singleton = None
 
     def __init__(self, n, cellSize, rulestring):
         '''Create the blank board and define its size.'''
@@ -30,7 +30,12 @@ class game:
         self.update = set()
         self.next_update = set()
 
+        game.game_singleton = self
+
         return None
+
+    def get_board_size(self):
+        return (self.__sizeX, self.__sizeY)
 
     def gen(self, surface):
         '''The true logic of the simulation. Update cells that need updating.''' 
@@ -89,21 +94,22 @@ class game:
                     self.board[i][j].set_state(0)
         return None
 
-    def add_to_board(self, pattern, head = (0,0)):
+    def add_to_board(self, pattern, head):
         '''Places imported figures onto the board.'''
+        x, y = (0, 0)
+        if head:
+            x, y = head
 
-        figure = pattern[0]
-        name = pattern[1]
-        rules = pattern[2]
+        height = len(pattern)
+        width = len(pattern[0])
 
-        if rules:
-            if rules.upper() != self.rules.upper():
-                print(f'Warning: {name} has rules {rules} while simulation has rules {self.rules}.')
+        if (x + height > self.__sizeX) or y + width > self.__sizeY:
+            print(f'WARNING: pattern has size {height}x{width}, placing the top left corner at ({x},{y}) will overflow board bounds. Proceed and wrap?')
+        
 
-        if figure:
-            for i in range(len(figure)):
-                for j in range(len(figure[i])):
-                    self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX].set_state(figure[i][j])
+        for i in range(len(pattern)):
+            for j in range(len(pattern[i])):
+                self.board[(i + head[0]) % self.__sizeY][(j + head[1]) % self.__sizeX].set_state(pattern[i][j])
         return None
 
     def init(self, **config):
